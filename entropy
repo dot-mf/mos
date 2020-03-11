@@ -1,0 +1,95 @@
+# -*- coding: UTF-8 -*-  
+import csv
+import time
+import math
+#import matplotlib.pyplot as plt
+start=time.clock()
+fileName = "/Users/hr/Downloads/python/Detection/203719.csv"#csv文件的路径
+#读取文件中内容
+def allData():
+    csv_reader = csv.reader(open(fileName))
+    fileContent = []
+    for row in csv_reader:
+        fileContent.append(row)#一行行加入
+    srcip = []
+    srcpt=[]
+    dstip=[]
+    dstpt=[]
+    for i in range(1,len(fileContent)):#获取取要的那一列的所有内容 
+        srcip.append(fileContent[i][3])
+        srcpt.append(fileContent[i][4]) 
+        dstip.append(fileContent[i][5])  
+        dstpt.append(fileContent[i][6])   
+    return srcip,srcpt,dstip,dstpt
+srcip,srcpt,dstip,dstpt = allData()
+#分块
+srcip1=[]
+for i in range(0,len(srcip),len(srcip)%100):
+    f=srcip[i:i+100]
+    srcip1.append(f)
+srcpt1=[]
+for i in range(0,len(srcpt),len(srcpt)%100):
+    f=srcpt[i:i+100]
+    srcpt1.append(f)
+dstip1=[]
+for i in range(0,len(dstip),len(dstip)%100):
+    f=dstip[i:i+100]
+    dstip1.append(f)
+dstpt1=[]
+for i in range(0,len(dstpt),len(dstpt)%100):
+    f=dstpt[i:i+100]
+    dstpt1.append(f)
+
+#信息熵中pi是i出现的概率，H=pi*logpi
+#计算信息熵的函数
+def calEnt(labels):
+    numEntries = len(labels)
+    labelCounts={}
+    for lable in labels:
+        if lable not in labelCounts.keys():
+            labelCounts[lable] = 0
+        labelCounts[lable]+=1
+    shannonEnt=0.0
+    for key in labelCounts.keys():
+        prob = float(labelCounts[key])/numEntries
+        shannonEnt -= prob * math.log(prob,2) # 以2为底的对数
+    return shannonEnt
+
+srcip2=[]
+for i in range(0,len(srcip1)):
+    res_srcip= calEnt(srcip1[i])
+    srcip2.append(res_srcip)
+with open('/Users/hr/Downloads/python/Detection/srcip.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Src IP Address entropy'])#标题 
+    for line in srcip2:
+        writer.writerow([line])
+srcpt2=[]
+for i in range(0,len(srcpt1)):
+    res_srcpt= calEnt(srcpt1[i])
+    srcpt2.append(res_srcpt)
+with open('/Users/hr/Downloads/python/Detection/srcpt.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Src Port entropy'])#标题 
+    for line in srcpt2:
+        writer.writerow([line])
+dstip2=[]
+for i in range(0,len(dstip1)):
+    res_dstip= calEnt(dstip1[i])
+    dstip2.append(res_dstip)
+with open('/Users/hr/Downloads/python/Detection/dstip.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Dst IP Address entropy'])#标题 
+    for line in dstip2:
+        writer.writerow([line])
+dstpt2=[]
+for i in range(0,len(dstpt1)):
+    res_dstpt= calEnt(dstpt1[i])
+    dstpt2.append(res_dstpt)
+with open('/Users/hr/Downloads/python/Detection/dstpt.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Dst Port entropy'])#标题 
+    for line in dstpt2:
+        writer.writerow([line])
+end=time.clock()
+print str(end-start)
