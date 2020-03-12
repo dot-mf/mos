@@ -1,0 +1,18 @@
+# -*- coding: UTF-8 -*-  
+#获取数据
+import csv
+import numpy as np
+import time
+start=time.clock()
+
+fileName = "/1.csv"
+with open(fileName) as f:
+    data = np.loadtxt(f,str,delimiter = ",", skiprows = 824475)#skiprows是跳过的行数
+    
+with open('/203719.csv', 'w') as f:#保存至
+    writer = csv.writer(f)
+    writer.writerow(["Date first seen", "Duration", "Proto",'Src IP Addr','Src Pt','Dst IP Addr','Dst Pt','Packets','Bytes','Flows','Flags','Tos','class','attackType','attackID','attackDescription'])#标题 
+    for r in data[:203719]:#读取指定行
+        writer.writerow(r)
+end=time.clock()
+print str(end-start)
