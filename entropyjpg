@@ -1,0 +1,127 @@
+# -*- coding: UTF-8 -*-  
+import csv
+import time
+import math
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap, BoundaryNorm
+import matplotlib.patches as patches
+start=time.clock()
+fileName = "22.csv"#csv文件的路径
+#读取文件中内容
+def allData():
+    csv_reader = csv.reader(open(fileName))
+    fileContent = []
+    for row in csv_reader:
+        fileContent.append(row)#一行行加入
+    srcip=[]
+    srcpt=[]
+    dstpt=[]
+    for i in range(1,len(fileContent)):#获取取要的那一列的所有内容 
+        srcip.append(fileContent[i][3])
+        srcpt.append(fileContent[i][4]) 
+        dstpt.append(fileContent[i][6])   
+    return srcip,srcpt,dstpt
+srcip,srcpt,dstpt = allData()
+#分块
+srcip1=[]
+for i in range(0,len(srcip),100):#每100个元素分块
+    f=srcip[i:i+len(srcip)/100]
+    srcip1.append(f)
+srcpt1=[]
+for i in range(0,len(srcpt),100):
+    f=srcpt[i:i+len(srcpt)/100]
+    srcpt1.append(f)
+
+dstpt1=[]
+for i in range(0,len(dstpt),100):
+    f=dstpt[i:i+len(dstpt)/100]
+    dstpt1.append(f)
+#信息熵中pi是i出现的概率，H=pi*logpi
+#计算信息熵的函数
+def calEnt(labels):
+    numEntries = len(labels)
+    labelCounts={}
+    for lable in labels:
+        if lable not in labelCounts.keys():
+            labelCounts[lable] = 0
+        labelCounts[lable]+=1
+    shannonEnt=0.0
+    for key in labelCounts.keys():
+        prob = float(labelCounts[key])/numEntries
+        shannonEnt -= prob * math.log(prob,2) # 以2为底的对数
+    return shannonEnt
+srcip2=[]
+for i in range(0,len(srcip1)):
+    res_srcip= calEnt(srcip1[i])
+    srcip2.append(res_srcip)
+srcpt2=[]
+for i in range(0,len(srcpt1)):
+    res_srcpt= calEnt(srcpt1[i])
+    srcpt2.append(res_srcpt)
+dstpt2=[]
+for i in range(0,len(dstpt1)):
+    res_dstpt= calEnt(dstpt1[i])
+    dstpt2.append(res_dstpt)
+
+x=np.linspace(0,len(srcip2),len(srcip2))
+
+srcip2=np.array(srcip2)
+cmap = ListedColormap(['red','gold'])
+norm = BoundaryNorm([0,0.3,12], cmap.N)#设置区段
+points = np.array([x, srcip2]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+lc = LineCollection(segments, cmap=cmap, norm=norm)
+lc.set_array(srcip2)#应用区段
+lc.set_linewidth(2)#设置曲线宽度
+lc.set_label("Src IP Address entropy")
+plt.gca().add_collection(lc)
+lc.set_color('gold')
+
+srcpt2=np.array(srcpt2)
+cmap = ListedColormap(['red','green'])
+norm = BoundaryNorm([0,0.2,12], cmap.N)#设置区段
+points = np.array([x, srcpt2]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+lc = LineCollection(segments, cmap=cmap, norm=norm)
+lc.set_array(srcpt2)#应用区段
+lc.set_linewidth(2)#设置曲线宽度
+lc.set_label("Src Port entropy")
+plt.gca().add_collection(lc)
+lc.set_color('green')
+
+dstpt2=np.array(dstpt2)
+cmap = ListedColormap(['blue','red'])
+norm = BoundaryNorm([0,11.6,12], cmap.N)#设置区段
+points = np.array([x, dstpt2]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+lc = LineCollection(segments, cmap=cmap, norm=norm)
+lc.set_array(dstpt2)#应用区段
+lc.set_linewidth(2)#设置曲线宽度
+lc.set_label("Dst Port entropy")
+plt.gca().add_collection(lc)
+lc.set_color('blue')
+
+#进行标注
+plt.annotate('The red curve means DoS attack', xy=(3500,12 ), xytext=(1000, 13.5),arrowprops=dict(facecolor='black', shrink=0.05),fontsize=16)#标注dos
+ax = plt.axes()
+rect1=patches.Rectangle((2440, 0.5),380,10,linewidth=2,edgecolor='black',facecolor='none')
+ax.add_patch(rect1)
+rect2=patches.Rectangle((5720, 0.5),230,10,linewidth=2,edgecolor='black',facecolor='none')
+ax.add_patch(rect2)
+plt.annotate('Normal Flow', xy=(2900,8 ), xytext=(4000, 6),arrowprops=dict(facecolor='black', shrink=0.05),fontsize=16)
+plt.annotate('Normal Flow', xy=(5650,4 ), xytext=(4000, 6),arrowprops=dict(facecolor='black', shrink=0.05),fontsize=16)
+
+ax.set_xlim(min(x), max(x))
+ax.set_ylim(0, 15)
+
+plt.legend()#图例在右上角
+plt.xlabel("flow",fontsize=16) #X轴标签
+plt.ylabel("Entropy Value",fontsize=16,rotation='horizontal') #Y轴标签
+plt.title("Entropy Value Diagram",fontweight='bold',color='black',fontsize=20) #标题
+plt.show()
+
+end=time.clock()
+print str(end-start)
